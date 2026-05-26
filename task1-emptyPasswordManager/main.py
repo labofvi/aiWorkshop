@@ -144,14 +144,26 @@ def save_passwords(passwords=None, file_name="vault.txt"):
     """
     Save the password vault to a file.
 
-    If a list of passwords is provided, it is saved directly.
-    Otherwise the current vault is decrypted and saved.
+    This function writes encrypted passwords to the file using the provided
+    Caesar cipher function. The file stores the password field in encrypted
+    form so passwords are not written as plain text.
     """
     if passwords is None:
         passwords = []
         for website, username, encrypted_password in zip(websites, usernames, encrypted_passwords):
-            decrypted_password = caesar_decrypt(encrypted_password, DEFAULT_SHIFT)
-            passwords.append({"website": website, "username": username, "password": decrypted_password})
+            passwords.append({"website": website, "username": username, "password": encrypted_password})
+    else:
+        encrypted_entries = []
+        for entry in passwords:
+            website = entry.get("website", "")
+            username = entry.get("username", "")
+            password = entry.get("password", "")
+            encrypted_entries.append({
+                "website": website,
+                "username": username,
+                "password": caesar_encrypt(password, DEFAULT_SHIFT),
+            })
+        passwords = encrypted_entries
 
     with open(file_name, "w") as file:
         json.dump(passwords, file, indent=4)
@@ -165,7 +177,8 @@ def load_passwords(file_name="vault.txt"):
     """
     Load passwords from a file into the password vault.
 
-    The function reads plaintext passwords and stores them encrypted internally.
+    The file is expected to contain encrypted passwords. This function loads
+    the encrypted values internally and returns a decrypted copy of the data.
     """
     try:
         with open(file_name, "r") as file:
@@ -181,15 +194,21 @@ def load_passwords(file_name="vault.txt"):
     usernames.clear()
     encrypted_passwords.clear()
 
+    decrypted_entries = []
     for entry in loaded_passwords:
         website = entry.get("website", "")
         username = entry.get("username", "")
-        password = entry.get("password", "")
+        encrypted_password = entry.get("password", "")
         websites.append(website)
         usernames.append(username)
-        encrypted_passwords.append(caesar_encrypt(password, DEFAULT_SHIFT))
+        encrypted_passwords.append(encrypted_password)
+        decrypted_entries.append({
+            "website": website,
+            "username": username,
+            "password": caesar_decrypt(encrypted_password, DEFAULT_SHIFT),
+        })
 
-    return loaded_passwords
+    return decrypted_entries
 
 
 # Main method
