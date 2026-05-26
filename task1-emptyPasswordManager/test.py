@@ -14,6 +14,7 @@ class TestPasswordManager(unittest.TestCase):
         ]
         with open(self.test_passwords_file, "w") as f:
             json.dump(self.test_passwords, f)
+        load_passwords(self.test_passwords_file)
 
     def tearDown(self):
         # Remove the temporary vault.txt file after testing
@@ -54,9 +55,9 @@ class TestPasswordManager(unittest.TestCase):
         website = "example.net"
         username = "user456"
         password = "StrongP@ssw0rd"
-        add_password(website, username, password)
+        add_password(website, username, password, password_list=self.test_passwords)
 
-        # Check if the added password is in the lists
+        # Check if the added password is in the list used for the test sample
         self.assertIn({"website": website, "username": username, "password": password}, self.test_passwords)
 
     def test_get_password(self):
